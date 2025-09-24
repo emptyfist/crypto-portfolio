@@ -2,19 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { unauthenticatedRoutes } from "@/lib/util";
 
 export default async function middleware(request: NextRequest) {
-  console.log(`Middleware called for: ${request.nextUrl.pathname}`);
-
   if (isApiRequest(request)) {
-    console.log("API request - allowing");
     return NextResponse.next();
   }
 
   if (isUnauthenticatedRoute(request)) {
-    console.log("Unauthenticated route - allowing");
     return NextResponse.next();
   }
 
-  console.log("Protected route - redirecting to login");
   return NextResponse.redirect(new URL("/login", request.url));
 }
 
