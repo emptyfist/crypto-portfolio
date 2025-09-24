@@ -11,6 +11,9 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Crypto Portfolio",
   description: "Track your crypto portfolio anytime, anywhere - By Emptyfist",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
