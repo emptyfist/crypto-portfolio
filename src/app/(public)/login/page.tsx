@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,9 +24,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { auth } from "@/lib/repositories/supabase";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.email(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   rememberToken: z.boolean(),
 });
@@ -46,16 +48,30 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-    try {
-      // TODO: Implement actual login logic
-      console.log("Login data:", data);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error("Login error:", error);
-    } finally {
-      setIsLoading(false);
+
+    const { data: authData, error: authError } = await auth.signIn(
+      data.email,
+      data.password,
+    );
+
+    if (authError) {
+      // throw authError;
+      toast.error(
+        (typeof authError === "object" &&
+        authError !== null &&
+        "message" in authError
+          ? (authError as { message?: string }).message
+          : undefined) || "An error occurred during login. Please try again.",
+      );
     }
+
+    if (authData?.user) {
+      // Refresh the page to ensure middleware picks up the new session
+      window.location.href = "/dashboard";
+      toast.success("Login successful!");
+    }
+
+    setIsLoading(false);
   };
 
   const handleCancel = () => {

@@ -2,8 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,10 +25,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { auth } from "@/lib/repositories/supabase";
 
 const signupSchema = z
   .object({
-    email: z.string().email("Please enter a valid email address"),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    email: z.email(),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6, "Please confirm your password"),
     agreeToTerms: z.boolean().refine((val) => val === true, {
@@ -40,13 +45,17 @@ const signupSchema = z
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
-
 export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const router = useRouter();
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -56,16 +65,36 @@ export default function Signup() {
 
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
-    try {
-      // TODO: Implement actual signup logic
-      console.log("Signup data:", data);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error("Signup error:", error);
-    } finally {
-      setIsLoading(false);
+    setError(null);
+    setSuccess(false);
+
+    const { data: authData, error: authError } = await auth.signUp(
+      data.email,
+      data.password,
+      {
+        firstName: data.firstName,
+        lastName: data.lastName,
+      },
+    );
+
+    if (authError) {
+      toast.error(
+        (typeof authError === "object" &&
+        authError !== null &&
+        "message" in authError
+          ? (authError as { message?: string }).message
+          : undefined) || "An error occurred during signup. Please try again.",
+      );
     }
+
+    if (authData?.user) {
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
+    }
+
+    setIsLoading(false);
   };
 
   const handleCancel = () => {
@@ -98,11 +127,71 @@ export default function Signup() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Success Message */}
+            {success && (
+              <div className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
+                <p className="text-green-400 text-sm text-center">
+                  Account created! Please check your email to verify your
+                  account before logging in.
+                </p>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg">
+                <p className="text-red-400 text-sm text-center">{error}</p>
+              </div>
+            )}
+
             <Form {...form}>
               <form
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
               >
+                {/* Email Input */}
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-foreground">
+                        First Name
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          autoFocus
+                          placeholder="Enter your first name"
+                          className="bg-foreground/10 border-white/20 text-foreground placeholder:text-foreground/60 focus:border-white/40"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-400" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Last Name Input */}
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-foreground">
+                        Last Name
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter your last name"
+                          className="bg-foreground/10 border-white/20 text-foreground placeholder:text-foreground/60 focus:border-white/40"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-red-400" />
+                    </FormItem>
+                  )}
+                />
+
                 {/* Email Input */}
                 <FormField
                   control={form.control}
@@ -200,9 +289,13 @@ export default function Signup() {
                   <Button
                     type="submit"
                     className="w-full bg-blue-600 hover:bg-blue-500 text-foreground"
-                    disabled={isLoading}
+                    disabled={isLoading || success}
                   >
-                    {isLoading ? "Creating account..." : "Sign Up"}
+                    {isLoading
+                      ? "Creating account..."
+                      : success
+                        ? "Check Your Email"
+                        : "Sign Up"}
                   </Button>
                   <Button
                     type="button"
