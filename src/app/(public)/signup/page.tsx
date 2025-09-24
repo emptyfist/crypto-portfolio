@@ -78,13 +78,7 @@ export default function Signup() {
     );
 
     if (authError) {
-      toast.error(
-        (typeof authError === "object" &&
-        authError !== null &&
-        "message" in authError
-          ? (authError as { message?: string }).message
-          : undefined) || "An error occurred during signup. Please try again.",
-      );
+      toast.error(authError as string);
     }
 
     if (authData?.user) {

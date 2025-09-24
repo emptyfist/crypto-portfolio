@@ -72,7 +72,14 @@ export const auth = {
 
       return { data, error: null };
     } catch (error) {
-      return { data: null, error };
+      return {
+        data: null,
+        error:
+          (typeof error === "object" && error !== null && "message" in error
+            ? (error as { message?: string }).message
+            : undefined) ||
+          "An error occurred during signup. Please try again.",
+      };
     }
   },
 
@@ -90,7 +97,13 @@ export const auth = {
 
       return { data, error: null };
     } catch (error) {
-      return { data: null, error };
+      return {
+        data: null,
+        error:
+          (typeof error === "object" && error !== null && "message" in error
+            ? (error as { message?: string }).message
+            : undefined) || "An error occurred during login. Please try again.",
+      };
     }
   },
 

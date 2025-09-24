@@ -55,18 +55,10 @@ export default function Login() {
     );
 
     if (authError) {
-      // throw authError;
-      toast.error(
-        (typeof authError === "object" &&
-        authError !== null &&
-        "message" in authError
-          ? (authError as { message?: string }).message
-          : undefined) || "An error occurred during login. Please try again.",
-      );
+      toast.error(authError as string);
     }
 
     if (authData?.user) {
-      // Refresh the page to ensure middleware picks up the new session
       window.location.href = "/dashboard";
       toast.success("Login successful!");
     }
@@ -75,7 +67,6 @@ export default function Login() {
   };
 
   const handleCancel = () => {
-    // TODO: Implement cancel logic (e.g., redirect to home)
     window.history.back();
   };
 
