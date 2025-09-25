@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { auth } from "@/lib/repositories/supabase";
+import { auth } from "@/lib/supabase-client";
 
 const signupSchema = z
   .object({

@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { auth } from "@/lib/repositories/supabase";
+import { auth } from "@/lib/supabase-client";
 
 export default function Profile() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -62,9 +62,9 @@ export default function Profile() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-start space-x-3 px-3 py-2 h-auto text-foreground hover:bg-white/10"
+          className="w-full justify-start space-x-3 px-3 py-2 h-auto text-foreground hover:bg-foreground/20"
         >
-          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-foreground text-sm font-medium">
+          <div className="w-8 h-8 rounded-full bg-foreground/30 flex items-center justify-center text-foreground text-sm font-medium flex-shrink-0">
             {user?.user_metadata?.firstName?.charAt(0) ||
               user?.email?.charAt(0) ||
               "U"}
@@ -75,14 +75,17 @@ export default function Profile() {
                 ? `${user.user_metadata.firstName} ${user.user_metadata.lastName}`
                 : user?.user_metadata?.firstName || "User"}
             </div>
-            <div className="text-xs text-foreground/70">
+            <div className="text-xs text-foreground/80 truncate max-w-[120px]">
               {user?.email || "Loading..."}
             </div>
           </div>
-          <ChevronDown className="w-4 h-4 text-foreground/70" />
+          <ChevronDown className="w-4 h-4 text-foreground/80" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent
+        align="end"
+        className="w-56 bg-foreground/10 backdrop-blur-sm border-foreground/30"
+      >
         <DropdownMenuItem onClick={handleProfile}>
           <User className="w-4 h-4 mr-2" />
           Profile
