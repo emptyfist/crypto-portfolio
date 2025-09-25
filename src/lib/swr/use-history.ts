@@ -1,4 +1,4 @@
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import type { Transaction } from "@/components/history/type";
 
 interface HistorySearchParams {
@@ -8,6 +8,7 @@ interface HistorySearchParams {
   type?: "buy" | "sell";
   startDate?: string;
   endDate?: string;
+  fileName?: string;
 }
 
 interface HistoryResponse {
@@ -44,6 +45,9 @@ export function useHistory(params: HistorySearchParams = {}) {
       if (params.endDate) {
         searchParams.set("endDate", params.endDate);
       }
+      if (params.fileName) {
+        searchParams.set("fileName", params.fileName);
+      }
 
       const res = await fetch(
         `/api/transactions/history?${searchParams.toString()}`,
@@ -61,4 +65,14 @@ export function useHistory(params: HistorySearchParams = {}) {
       revalidateIfStale: false,
     },
   );
+}
+
+// Function to revalidate all history queries
+export function revalidateHistory() {
+  return mutate((key) => {
+    if (Array.isArray(key) && key[0] === "api-history") {
+      return true;
+    }
+    return false;
+  });
 }

@@ -6,7 +6,7 @@ import { parse } from "papaparse";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z, ZodError, type ZodIssue } from "zod";
 import { type Transaction } from "@/components/history/type";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +27,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { revalidateHistory } from "@/lib/swr/use-history";
 import { useUpload } from "@/lib/swr/use-upload";
 
 const csvSchema = z.object({
@@ -80,6 +81,8 @@ export default function ImportBtn() {
   const { uploadTransactions, isUploading } = useUpload({
     onSuccess: (data) => {
       toast.success(data.message);
+      // Revalidate history data to show updated transactions
+      revalidateHistory();
     },
     onError: (error) => {
       toast.error(error);
@@ -134,7 +137,7 @@ export default function ImportBtn() {
 
         // Validate each row
         const validTransactions: Transaction[] = [];
-        const invalidRows: number[] = [];
+        const invalidRows: string[] = [];
 
         csvData.forEach((row: unknown, index: number) => {
           try {
@@ -153,15 +156,22 @@ export default function ImportBtn() {
             };
             validTransactions.push(transaction);
           } catch (error) {
-            console.error(error);
-            invalidRows.push(index + 1);
+            let errorMsg = "Unknown error";
+            if (error instanceof ZodError) {
+              errorMsg = error.issues
+                .map((e: ZodIssue) => `${e.path.join(".")}: ${e.message}`)
+                .join("; ");
+            } else if (error instanceof Error) {
+              errorMsg = error.message;
+            }
+            invalidRows.push(`Row [${index + 1}] has error: ${errorMsg}`);
           }
         });
 
         if (invalidRows.length > 0) {
-          toast.error(
-            `Invalid rows found: ${invalidRows.join(", ")}. Please check the format.`,
-          );
+          toast.error(invalidRows.join("\n"), {
+            duration: 10000,
+          });
         }
 
         if (validTransactions.length > 0) {
@@ -176,6 +186,8 @@ export default function ImportBtn() {
             setIsUploadDialogOpen(false);
             uploadForm.reset();
             setSelectedFile(null);
+            // Revalidate history data to show updated transactions
+            revalidateHistory();
           }
         }
       },

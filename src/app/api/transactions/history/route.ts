@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type") as "buy" | "sell" | null;
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const fileName = searchParams.get("fileName");
 
     // Get transaction history using centralized function
     const result = await transactions.getTransactionHistory({
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
       type: type || undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
+      fileName: fileName || undefined,
     });
 
     return NextResponse.json(result);

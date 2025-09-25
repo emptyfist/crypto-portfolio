@@ -137,6 +137,7 @@ export const transactions = {
     type?: "buy" | "sell";
     startDate?: string;
     endDate?: string;
+    fileName?: string;
   }) {
     try {
       const supabase = await createServerSupabaseClient();
@@ -151,7 +152,15 @@ export const transactions = {
         throw new Error("Unauthorized");
       }
 
-      const { page = 1, limit = 50, symbol, type, startDate, endDate } = params;
+      const {
+        page = 1,
+        limit = 50,
+        symbol,
+        type,
+        startDate,
+        endDate,
+        fileName,
+      } = params;
 
       // Build query
       let query = supabase
@@ -162,16 +171,19 @@ export const transactions = {
 
       // Apply filters
       if (symbol) {
-        query = query.eq("symbol", symbol.toUpperCase());
+        query = query.ilike("symbol", symbol);
       }
       if (type && (type === "buy" || type === "sell")) {
-        query = query.eq("type", type);
+        query = query.ilike("type", type);
       }
       if (startDate) {
         query = query.gte("date_time", startDate);
       }
       if (endDate) {
         query = query.lte("date_time", endDate);
+      }
+      if (fileName) {
+        query = query.ilike("file_name", `%${fileName}%`);
       }
 
       // Apply pagination

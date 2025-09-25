@@ -1,10 +1,12 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { format } from "date-fns";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { type Transaction } from "@/components/history/type";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -13,28 +15,65 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-const currentTransactions: Transaction[] = [];
-const totalPages = 1;
+import { useHistory } from "@/lib/swr/use-history";
+import { getBlockchainScanUrl } from "@/lib/utils";
 
 export default function HistoryList() {
   const [currentPage, setCurrentPage] = useState(1);
-  // const [startIndex, setStartIndex] = useState(0);
-  // const [endIndex, setEndIndex] = useState(10);
-  // const [filteredTransactions, setFilteredTransactions] = useState<
-  //   Transaction[]
-  // >([]);
+  const [pageInput, setPageInput] = useState("");
+  const searchParams = useSearchParams();
 
-  const startIndex = 0;
-  const endIndex = 10;
-  const filteredTransactions = [];
+  // Build query parameters for the API
+  const query = {
+    page: currentPage,
+    limit: 10,
+    symbol: searchParams.get("symbol") || undefined,
+    startDate: searchParams.get("startDate") || undefined,
+    endDate: searchParams.get("endDate") || undefined,
+    fileName: searchParams.get("fileName") || undefined,
+  };
+
+  // Fetch data using the useHistory hook
+  const { data, error, isLoading } = useHistory(query);
+
+  const currentTransactions = data?.transactions || [];
+  const totalPages = data?.pagination?.totalPages || 1;
+  const totalRecords = data?.pagination?.total || 0;
+  const startIndex = (currentPage - 1) * 10;
+  const endIndex = Math.min(startIndex + 10, totalRecords);
+
+  // Handle page navigation
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setPageInput("");
+    }
+  };
+
+  const handlePageInputChange = (value: string) => {
+    setPageInput(value);
+  };
+
+  const handlePageInputSubmit = () => {
+    const page = parseInt(pageInput);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setPageInput("");
+    }
+  };
+
+  const handlePageInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handlePageInputSubmit();
+    }
+  };
 
   return (
     <Card className="bg-foreground/10 border-foreground/20">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-foreground">
           <Search className="h-5 w-5" />
-          Transactions (10)
+          Transactions ({totalRecords})
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -44,9 +83,15 @@ export default function HistoryList() {
               <TableRow className="border-foreground/20">
                 <TableHead className="text-foreground">Symbol</TableHead>
                 <TableHead className="text-foreground">Type</TableHead>
-                <TableHead className="text-foreground">Amount</TableHead>
-                <TableHead className="text-foreground">Price</TableHead>
-                <TableHead className="text-foreground">Total Value</TableHead>
+                <TableHead className="text-foreground text-right">
+                  Amount
+                </TableHead>
+                <TableHead className="text-foreground text-right">
+                  Price
+                </TableHead>
+                <TableHead className="text-foreground text-right">
+                  Total Value
+                </TableHead>
                 <TableHead className="text-foreground">Date Time</TableHead>
                 <TableHead className="text-foreground">Network</TableHead>
                 <TableHead className="text-foreground">
@@ -56,7 +101,50 @@ export default function HistoryList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentTransactions.length === 0 ? (
+              {isLoading ? (
+                <>
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index} className="border-foreground/20">
+                      <TableCell className="py-4">
+                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-16"></div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="h-6 bg-foreground/10 rounded-full animate-pulse w-12"></div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-20"></div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-24"></div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-28"></div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-32"></div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-20"></div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-24"></div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-28"></div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </>
+              ) : error ? (
+                <TableRow className="border-foreground/20">
+                  <TableCell
+                    colSpan={9}
+                    className="text-center py-8 text-red-400"
+                  >
+                    Error loading transactions: {error.message}
+                  </TableCell>
+                </TableRow>
+              ) : currentTransactions.length === 0 ? (
                 <TableRow className="border-foreground/20">
                   <TableCell
                     colSpan={9}
@@ -85,26 +173,37 @@ export default function HistoryList() {
                         {transaction.type.toUpperCase()}
                       </span>
                     </TableCell>
-                    <TableCell className="text-foreground">
+                    <TableCell className="text-foreground text-right">
                       {transaction.amount}
                     </TableCell>
-                    <TableCell className="text-foreground">
+                    <TableCell className="text-foreground text-right">
                       ${transaction.price.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-foreground">
+                    <TableCell className="text-foreground text-right">
                       $
                       {(
                         transaction.amount * transaction.price
                       ).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-foreground">
-                      {transaction.dateTime}
+                      {format(transaction.dateTime, "yyyy-MM-dd HH:mm:ss")}
                     </TableCell>
                     <TableCell className="text-foreground">
                       {transaction.network}
                     </TableCell>
                     <TableCell className="text-foreground/60 font-mono text-xs">
-                      {transaction.transactionId.substring(0, 8)}...
+                      <a
+                        href={getBlockchainScanUrl(
+                          transaction.network,
+                          transaction.transactionId,
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+                        title={`View on ${transaction.network} blockchain explorer`}
+                      >
+                        {transaction.transactionId.substring(0, 8)}...
+                      </a>
                     </TableCell>
                     <TableCell className="text-foreground/60">
                       {transaction.fileName}
@@ -120,33 +219,44 @@ export default function HistoryList() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-foreground/60">
-              Showing {startIndex + 1} to{" "}
-              {Math.min(endIndex, filteredTransactions.length)} of{" "}
-              {filteredTransactions.length} transactions
+              Showing {startIndex + 1} to {endIndex} of {totalRecords}{" "}
+              transactions
             </div>
             <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-foreground/60">Go to:</span>
+                <Input
+                  type="number"
+                  min="1"
+                  max={totalPages}
+                  value={pageInput}
+                  onChange={(e) => handlePageInputChange(e.target.value)}
+                  onKeyPress={handlePageInputKeyPress}
+                  className="w-20 h-8 text-center text-sm bg-foreground/5 border-foreground/20 text-foreground placeholder:text-foreground/50"
+                  placeholder="Page"
+                />
+              </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-foreground/10 border-foreground/20 text-foreground hover:bg-foreground/20"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className="bg-foreground/10 border-foreground/20 text-foreground hover:bg-foreground/20 size-8"
+                onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
               >
-                Previous
+                <ChevronLeft className="w-4 h-4" />
               </Button>
               <span className="text-sm text-foreground">
                 Page {currentPage} of {totalPages}
               </span>
+
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-foreground/10 border-foreground/20 text-foreground hover:bg-foreground/20"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
+                className="bg-foreground/10 border-foreground/20 text-foreground hover:bg-foreground/20 size-8"
+                onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
-                Next
+                <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
           </div>

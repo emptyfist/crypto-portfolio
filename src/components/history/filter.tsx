@@ -26,7 +26,8 @@ import { cn, replaceUrlParams } from "@/lib/utils";
 
 const filterSchema = z.object({
   symbol: z.string().optional(),
-  date: z.date().optional(),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
   fileName: z.string().optional(),
 });
 
@@ -37,7 +38,8 @@ export default function Filter() {
     resolver: zodResolver(filterSchema),
     defaultValues: {
       symbol: "",
-      date: new Date(),
+      startDate: undefined,
+      endDate: undefined,
       fileName: "",
     },
   });
@@ -45,7 +47,10 @@ export default function Filter() {
   const handleSubmit = (data: FilterFormData) => {
     replaceUrlParams({
       symbol: data.symbol,
-      date: data.date?.toISOString().split("T")[0],
+      startDate: data.startDate
+        ? format(data.startDate, "yyyy-MM-dd")
+        : undefined,
+      endDate: data.endDate ? format(data.endDate, "yyyy-MM-dd") : undefined,
       fileName: data.fileName,
     });
   };
@@ -53,7 +58,15 @@ export default function Filter() {
   const clearFilters = () => {
     form.reset({
       symbol: "",
-      date: new Date(),
+      startDate: undefined,
+      endDate: undefined,
+      fileName: "",
+    });
+
+    replaceUrlParams({
+      symbol: "",
+      startDate: undefined,
+      endDate: undefined,
       fileName: "",
     });
   };
@@ -88,10 +101,46 @@ export default function Filter() {
               />
               <FormField
                 control={form.control}
-                name="date"
+                name="startDate"
                 render={({ field }) => (
                   <FormItem className="min-w-40">
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel>Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal h-10 bg-foreground/5 hover:bg-foreground/10 placeholder:text-foreground/50 h-9",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 size-4" />
+                            {field.value ? (
+                              format(field.value, "yyyy-MM-dd")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem className="min-w-40">
+                    <FormLabel>End Date</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
