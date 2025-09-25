@@ -11,12 +11,18 @@ A comprehensive cryptocurrency portfolio management application built with Next.
 - **Performance Analytics**: Detailed P&L analysis with percentage calculations
 - **CSV Export**: Export portfolio holdings and summaries to CSV format
 
+<img width="1811" height="866" alt="image" src="https://github.com/user-attachments/assets/9cad4c23-0656-43a9-80b8-772c7892b906" />
+
+
 ### 💰 Transaction Management
 
 - **CSV Import**: Bulk import transactions from CSV files
 - **Transaction History**: Complete transaction history with filtering and pagination
 - **Edit/Delete**: Modify or remove individual transactions
 - **Duplicate Prevention**: Automatic duplicate transaction detection
+
+<img width="1793" height="861" alt="image" src="https://github.com/user-attachments/assets/12fa5bf4-0899-4ed4-97a9-8bca56368316" />
+
 
 ### 📈 Analytics & Reporting
 
@@ -25,11 +31,17 @@ A comprehensive cryptocurrency portfolio management application built with Next.
 - **Filtering**: Advanced filtering by symbol, type, date range, and file name
 - **Real-time Updates**: Live price updates from integrated price tracking
 
+<img width="1562" height="554" alt="image" src="https://github.com/user-attachments/assets/6ae75085-e503-4161-9f3a-e19b9a15884d" />
+
+
 ### 🔐 Security & Authentication
 
 - **User Authentication**: Secure login/signup with Supabase Auth
 - **Row Level Security**: Database-level security ensuring users only see their own data
 - **Audit Trail**: Complete logging of all CRUD operations
+
+<img width="1770" height="914" alt="image" src="https://github.com/user-attachments/assets/3cf8c002-82f7-42b3-887e-83faa58ea79e" />
+
 
 ### 🎨 User Experience
 
