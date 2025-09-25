@@ -1,9 +1,13 @@
+import { LayoutDashboard } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function HoldingsLoading() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Portfolio Holdings</h1>
+      <h1 className="text-3xl font-bold flex items-center gap-3">
+        <LayoutDashboard className="h-8 w-8 text-yellow-500" />
+        Dashboard
+      </h1>
 
       {/* Portfolio Summary Cards Skeleton */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

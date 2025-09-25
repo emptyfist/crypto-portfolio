@@ -1,4 +1,10 @@
-import { LayoutDashboard, History, Briefcase, LucideIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  History,
+  LucideIcon,
+  Trophy,
+  Activity,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import MenuItem from "@/components/layout/menuitem";
@@ -6,8 +12,9 @@ import Profile from "@/components/layout/profile";
 
 const MENU_ITEMS = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Leaderboard", href: "/leaderboard", icon: Briefcase },
+  { name: "Leaderboard", href: "/leaderboard", icon: Trophy },
   { name: "History", href: "/history", icon: History },
+  { name: "Audit Logs", href: "/audit-logs", icon: Activity },
 ] as const satisfies { name: string; href: string; icon: LucideIcon }[];
 
 export default function SideMenu() {

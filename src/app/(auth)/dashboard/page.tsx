@@ -1,10 +1,12 @@
+import { LayoutDashboard } from "lucide-react";
 import Image from "next/image";
+import PortfolioExportBtn from "@/components/holdings/portfolio-export-btn";
 import { Holding } from "@/components/holdings/type";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { holdings } from "@/lib/repositories/supabase";
 import { formatCurrency, formatNumber, getTokenImageUrl } from "@/lib/utils";
 
-export default async function Holdings() {
+export default async function DashboardPage() {
   let holdingsData;
   let error: string | null = null;
 
@@ -18,7 +20,12 @@ export default async function Holdings() {
   if (error) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Portfolio Holdings</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <LayoutDashboard className="h-8 w-8 text-yellow-500" />
+            Dashboard
+          </h1>
+        </div>
         <Card className="bg-foreground/20">
           <CardContent className="pt-6">
             <p className="text-muted-foreground">
@@ -33,7 +40,12 @@ export default async function Holdings() {
   if (!holdingsData) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Portfolio Holdings</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <LayoutDashboard className="h-8 w-8 text-yellow-500" />
+            Dashboard
+          </h1>
+        </div>
         <Card className="bg-foreground/20">
           <CardContent className="pt-6">
             <p className="text-muted-foreground">No holdings data available.</p>
@@ -53,7 +65,13 @@ export default async function Holdings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Portfolio Holdings</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold flex items-center gap-3">
+          <LayoutDashboard className="h-8 w-8 text-yellow-500" />
+          Dashboard
+        </h1>
+        <PortfolioExportBtn holdingsData={holdingsData} />
+      </div>
 
       {/* Portfolio Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
