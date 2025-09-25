@@ -200,7 +200,7 @@ BEGIN
         'symbol', NEW.symbol,
         'type', NEW.type,
         'changed_fields', (
-          SELECT jsonb_agg(key)
+          SELECT jsonb_agg(new_data.key)
           FROM jsonb_each(to_jsonb(NEW)) AS new_data
           JOIN jsonb_each(to_jsonb(OLD)) AS old_data ON new_data.key = old_data.key
           WHERE new_data.value IS DISTINCT FROM old_data.value
