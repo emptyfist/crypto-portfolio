@@ -144,6 +144,21 @@ export const transactions = {
         throw new Error(`Failed to save transactions: ${insertError.message}`);
       }
 
+      // Log CSV import activity using database function (after transactions are inserted)
+      const { error: logError } = await supabase.rpc(
+        "log_csv_import_activity",
+        {
+          p_user_id: user.id,
+          p_file_name: fileName,
+          p_transaction_count: transactions.length,
+          p_symbols: [...new Set(transactions.map((t) => t.symbol))],
+        },
+      );
+
+      if (logError) {
+        console.warn("Failed to log CSV import activity:", logError);
+      }
+
       return {
         success: true,
         message: `Successfully uploaded ${transactions.length} transactions`,
@@ -297,7 +312,6 @@ export const transactions = {
         updateData.file_name = updates.fileName;
       }
 
-      // Update the transaction
       const { data, error } = await supabase
         .from("transactions")
         .update(updateData)
@@ -335,7 +349,7 @@ export const transactions = {
         throw new Error("Unauthorized");
       }
 
-      // Delete the transaction
+      // Delete the transaction (audit logging is handled by database trigger)
       const { error } = await supabase
         .from("transactions")
         .delete()

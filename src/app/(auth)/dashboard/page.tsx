@@ -1,7 +1,6 @@
 import { LayoutDashboard } from "lucide-react";
 import Image from "next/image";
 import { Holding } from "@/components/holdings/type";
-import PriceUpdateBtn from "@/components/prices/price-update-btn";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { holdings } from "@/lib/repositories/supabase";
 import { formatCurrency, formatNumber, getTokenImageUrl } from "@/lib/utils";
@@ -66,7 +65,6 @@ export default async function DashboardPage() {
           <LayoutDashboard className="h-8 w-8 text-yellow-500" />
           Dashboard
         </h1>
-        <PriceUpdateBtn />
       </div>
 
       {/* Portfolio Summary Cards */}
