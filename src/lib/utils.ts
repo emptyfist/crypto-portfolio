@@ -117,3 +117,35 @@ export const getBlockchainScanUrl = (
       return `https://www.google.com/search?q=${network}+${transactionId}+blockchain+explorer`;
   }
 };
+
+// Format currency to USD
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
+
+// Format number with specified decimal places
+export function formatNumber(value: number, decimals: number = 2): string {
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
+
+// Function to get token image URL based on symbol
+export function getTokenImageUrl(symbol: string): string {
+  symbol = symbol.toUpperCase();
+  // Map of common token symbols to their image URLs
+  const tokenImages: Record<string, string> = {
+    BTC: "symbols/all.svg",
+    ETH: "symbols/eth.svg",
+    BNB: "symbols/bsc.svg",
+    SOL: "symbols/sol.svg",
+    TRX: "symbols/trx.svg",
+  };
+
+  // Return the image URL if found, otherwise use a generic crypto icon
+  return tokenImages[symbol.toUpperCase()] || `symbols/all.svg`;
+}
