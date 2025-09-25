@@ -32,7 +32,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 // Create a server-side Supabase client for API routes
-const createServerSupabaseClient = async () => {
+export const createServerSupabaseClient = async () => {
   const cookieStore = await cookies();
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -462,14 +462,28 @@ export const holdings = {
           total_amount: number;
           total_cost_usd: number;
           average_price: number;
+          current_price_usd: number;
+          total_value_usd: number;
+          profit_loss_usd: number;
+          profit_loss_percentage: number;
         }) => {
-          const currentPrice = this.getMockPrice(holding.symbol);
-          const totalValueUSD = holding.total_amount * currentPrice;
-          const profitLossUSD = totalValueUSD - holding.total_cost_usd;
+          // Use real prices from database, fallback to mock price if not available
+          const currentPrice =
+            holding.current_price_usd > 0 ? holding.current_price_usd : 0;
+          const totalValueUSD =
+            holding.total_value_usd > 0
+              ? holding.total_value_usd
+              : holding.total_amount * currentPrice;
+          const profitLossUSD =
+            holding.profit_loss_usd !== undefined
+              ? holding.profit_loss_usd
+              : totalValueUSD - holding.total_cost_usd;
           const profitLossPercentage =
-            holding.total_cost_usd > 0
-              ? (profitLossUSD / holding.total_cost_usd) * 100
-              : 0;
+            holding.profit_loss_percentage !== undefined
+              ? holding.profit_loss_percentage
+              : holding.total_cost_usd > 0
+                ? (profitLossUSD / holding.total_cost_usd) * 100
+                : 0;
 
           totalPortfolioValueUSD += totalValueUSD;
           totalCostUSD += holding.total_cost_usd;
@@ -500,25 +514,5 @@ export const holdings = {
     } catch (error) {
       throw error;
     }
-  },
-
-  // Mock function to get current price (replace with real API integration)
-  getMockPrice(symbol: string): number {
-    // This is a mock implementation
-    // In a real app, you would call an external API like CoinGecko, CoinMarketCap, etc.
-    const mockPrices: Record<string, number> = {
-      BTC: 45000,
-      ETH: 2800,
-      ADA: 0.45,
-      DOT: 7.2,
-      SOL: 95,
-      MATIC: 0.85,
-      LINK: 14.5,
-      UNI: 6.8,
-      AVAX: 28,
-      ATOM: 9.2,
-    };
-
-    return mockPrices[symbol] || 1; // Default to $1 if symbol not found
   },
 };

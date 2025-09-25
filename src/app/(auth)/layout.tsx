@@ -6,7 +6,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800">
+    <div className="flex min-h-screen max-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800">
       <div className="w-64 bg-white/10 backdrop-blur-sm border-r border-white/20 flex flex-col">
         <SideMenu />
       </div>

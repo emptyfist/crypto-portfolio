@@ -24,13 +24,12 @@ BEGIN
       u.email,
       COALESCE(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name', split_part(u.email, '@', 1)) as full_name,
       u.created_at,
-      -- Calculate total portfolio value (sum of all holdings)
+      -- Calculate total portfolio value (sum of all holdings with real prices)
       COALESCE(SUM(
         CASE 
           WHEN uh.total_amount > 0 THEN 
-            -- For now, we'll use the cost as current value
-            -- In a real app, you'd multiply by current market prices
-            uh.total_cost_usd
+            -- Use current market prices from token_prices table
+            uh.total_amount * COALESCE(tp.price_usd, uh.total_cost_usd / uh.total_amount)
           ELSE 0
         END
       ), 0) as total_portfolio_value_usd,
@@ -61,6 +60,7 @@ BEGIN
       WHERE t.user_id = u.id
       GROUP BY t.symbol
     ) uh ON true
+    LEFT JOIN token_prices tp ON UPPER(uh.symbol) = UPPER(tp.symbol)
     GROUP BY u.id, u.email, u.raw_user_meta_data, u.created_at
   )
   SELECT 

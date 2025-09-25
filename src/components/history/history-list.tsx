@@ -208,7 +208,7 @@ export default function HistoryList() {
                             size="sm"
                             className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-400"
                           >
-                            <Trash2 className="size-5" />
+                            <Trash2 className="size-5 text-red-400" />
                           </Button>
                         </DeleteTransactionDialog>
                       </div>
