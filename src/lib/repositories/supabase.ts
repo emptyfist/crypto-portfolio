@@ -2,6 +2,31 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import type { Transaction } from "@/components/history/type";
+import type { HoldingsSummary, Holding } from "@/components/holdings/type";
+
+interface LeaderboardUser {
+  user_id: string;
+  email: string;
+  full_name: string;
+  created_at: string;
+  total_portfolio_value_usd: string;
+  total_cost_usd: string;
+  total_profit_loss_usd: string;
+  total_profit_loss_percentage: string;
+  holdings_count: string;
+}
+
+interface UpdateTransactionData {
+  updated_at: string;
+  symbol?: string;
+  type?: string;
+  amount?: number;
+  price?: number;
+  date_time?: string;
+  network?: string;
+  transaction_id?: string;
+  file_name?: string;
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -225,5 +250,275 @@ export const transactions = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Update a transaction
+  async updateTransaction(id: string, updates: Partial<Transaction>) {
+    try {
+      const supabase = await createServerSupabaseClient();
+
+      // Check authentication
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error("Unauthorized");
+      }
+
+      // Prepare update data
+      const updateData: UpdateTransactionData = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (updates.symbol) {
+        updateData.symbol = updates.symbol;
+      }
+      if (updates.type) {
+        updateData.type = updates.type;
+      }
+      if (updates.amount !== undefined) {
+        updateData.amount = updates.amount;
+      }
+      if (updates.price !== undefined) {
+        updateData.price = updates.price;
+      }
+      if (updates.dateTime) {
+        updateData.date_time = updates.dateTime;
+      }
+      if (updates.network) {
+        updateData.network = updates.network;
+      }
+      if (updates.transactionId) {
+        updateData.transaction_id = updates.transactionId;
+      }
+      if (updates.fileName) {
+        updateData.file_name = updates.fileName;
+      }
+
+      // Update the transaction
+      const { data, error } = await supabase
+        .from("transactions")
+        .update(updateData)
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to update transaction: ${error.message}`);
+      }
+
+      return {
+        success: true,
+        message: "Transaction updated successfully",
+        data,
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Delete a transaction
+  async deleteTransaction(id: string) {
+    try {
+      const supabase = await createServerSupabaseClient();
+
+      // Check authentication
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error("Unauthorized");
+      }
+
+      // Delete the transaction
+      const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        throw new Error(`Failed to delete transaction: ${error.message}`);
+      }
+
+      return {
+        success: true,
+        message: "Transaction deleted successfully",
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
+export const leaderboard = {
+  // Get leaderboard data calculated by SQL function
+  async getLeaderboard() {
+    try {
+      const supabase = await createServerSupabaseClient();
+
+      // Try to get leaderboard data calculated by SQL function first
+      let leaderboardData;
+      try {
+        const { data, error } = await supabase.rpc("get_leaderboard");
+
+        if (error) {
+          console.warn(
+            "SQL function failed, falling back to JavaScript calculation:",
+            error.message,
+          );
+        } else {
+          leaderboardData = data || [];
+        }
+      } catch (rpcError) {
+        console.warn(
+          "SQL function error, falling back to JavaScript calculation:",
+          rpcError,
+        );
+      }
+
+      // Transform the data to match our expected format
+      return leaderboardData.map((user: LeaderboardUser) => ({
+        id: user.user_id,
+        email: user.email,
+        full_name: user.full_name,
+        created_at: user.created_at,
+        totalPortfolioValueUSD: parseFloat(
+          user.total_portfolio_value_usd || "0",
+        ),
+        totalCostUSD: parseFloat(user.total_cost_usd || "0"),
+        totalProfitLossUSD: parseFloat(user.total_profit_loss_usd || "0"),
+        totalProfitLossPercentage: parseFloat(
+          user.total_profit_loss_percentage || "0",
+        ),
+        holdingsCount: parseInt(user.holdings_count || "0"),
+      }));
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+
+export const holdings = {
+  // Get current holdings calculated from transactions using SQL
+  async getHoldings(): Promise<HoldingsSummary> {
+    try {
+      const supabase = await createServerSupabaseClient();
+
+      // Check authentication
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        throw new Error("Unauthorized");
+      }
+
+      // Try to get holdings calculated by SQL query first
+      let holdingsData;
+      try {
+        const { data, error } = await supabase.rpc("get_user_holdings", {
+          user_id_param: user.id,
+        });
+
+        if (error) {
+          console.warn(
+            "SQL function failed, falling back to JavaScript calculation:",
+            error.message,
+          );
+        } else {
+          holdingsData = data;
+        }
+      } catch (rpcError) {
+        console.warn(
+          "RPC call failed, falling back to JavaScript calculation:",
+          rpcError,
+        );
+      }
+
+      if (!holdingsData || holdingsData.length === 0) {
+        return {
+          totalPortfolioValueUSD: 0,
+          totalCostUSD: 0,
+          totalProfitLossUSD: 0,
+          totalProfitLossPercentage: 0,
+          holdings: [],
+        };
+      }
+
+      // Calculate total portfolio metrics
+      let totalPortfolioValueUSD = 0;
+      let totalCostUSD = 0;
+
+      const holdings: Holding[] = holdingsData.map(
+        (holding: {
+          symbol: string;
+          total_amount: number;
+          total_cost_usd: number;
+          average_price: number;
+        }) => {
+          const currentPrice = this.getMockPrice(holding.symbol);
+          const totalValueUSD = holding.total_amount * currentPrice;
+          const profitLossUSD = totalValueUSD - holding.total_cost_usd;
+          const profitLossPercentage =
+            holding.total_cost_usd > 0
+              ? (profitLossUSD / holding.total_cost_usd) * 100
+              : 0;
+
+          totalPortfolioValueUSD += totalValueUSD;
+          totalCostUSD += holding.total_cost_usd;
+
+          return {
+            symbol: holding.symbol,
+            totalAmount: holding.total_amount,
+            averagePrice: holding.average_price,
+            totalValueUSD,
+            totalCostUSD: holding.total_cost_usd,
+            profitLossUSD,
+            profitLossPercentage,
+          };
+        },
+      );
+
+      const totalProfitLossUSD = totalPortfolioValueUSD - totalCostUSD;
+      const totalProfitLossPercentage =
+        totalCostUSD > 0 ? (totalProfitLossUSD / totalCostUSD) * 100 : 0;
+
+      return {
+        totalPortfolioValueUSD,
+        totalCostUSD,
+        totalProfitLossUSD,
+        totalProfitLossPercentage,
+        holdings: holdings.sort((a, b) => b.totalValueUSD - a.totalValueUSD),
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Mock function to get current price (replace with real API integration)
+  getMockPrice(symbol: string): number {
+    // This is a mock implementation
+    // In a real app, you would call an external API like CoinGecko, CoinMarketCap, etc.
+    const mockPrices: Record<string, number> = {
+      BTC: 45000,
+      ETH: 2800,
+      ADA: 0.45,
+      DOT: 7.2,
+      SOL: 95,
+      MATIC: 0.85,
+      LINK: 14.5,
+      UNI: 6.8,
+      AVAX: 28,
+      ATOM: 9.2,
+    };
+
+    return mockPrices[symbol] || 1; // Default to $1 if symbol not found
   },
 };

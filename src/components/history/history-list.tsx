@@ -1,9 +1,13 @@
 "use client";
 
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Edit, Trash2 } from "lucide-react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import DeleteTransactionDialog from "@/components/history/delete-transaction-dialog";
+import EditTransactionDialog from "@/components/history/edit-transaction-dialog";
+import HistorySkeleton from "@/components/history/history-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useHistory } from "@/lib/swr/use-history";
-import { getBlockchainScanUrl } from "@/lib/utils";
+import { getBlockchainScanUrl, getTokenImageUrl } from "@/lib/utils";
 
 export default function HistoryList() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,47 +102,18 @@ export default function HistoryList() {
                   Transaction ID
                 </TableHead>
                 <TableHead className="text-foreground">File Name</TableHead>
+                <TableHead className="text-foreground text-center">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <>
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <TableRow key={index} className="border-foreground/20">
-                      <TableCell className="py-4">
-                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-16"></div>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="h-6 bg-foreground/10 rounded-full animate-pulse w-12"></div>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-20"></div>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-24"></div>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-28"></div>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-32"></div>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-20"></div>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-24"></div>
-                      </TableCell>
-                      <TableCell className="py-4">
-                        <div className="h-4 bg-foreground/10 rounded animate-pulse w-28"></div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </>
+                <HistorySkeleton />
               ) : error ? (
                 <TableRow className="border-foreground/20">
                   <TableCell
-                    colSpan={9}
+                    colSpan={10}
                     className="text-center py-8 text-red-400"
                   >
                     Error loading transactions: {error.message}
@@ -147,7 +122,7 @@ export default function HistoryList() {
               ) : currentTransactions.length === 0 ? (
                 <TableRow className="border-foreground/20">
                   <TableCell
-                    colSpan={9}
+                    colSpan={10}
                     className="text-center py-8 text-foreground/60"
                   >
                     No transactions found
@@ -159,7 +134,15 @@ export default function HistoryList() {
                     key={transaction.id}
                     className="border-foreground/20 hover:bg-foreground/5"
                   >
-                    <TableCell className="font-medium text-foreground">
+                    <TableCell className="font-medium text-foreground flex items-center gap-2">
+                      <div className="relative size-6">
+                        <Image
+                          src={getTokenImageUrl(transaction.symbol)}
+                          alt={`${transaction.symbol} logo`}
+                          fill
+                          className="rounded-full object-contain"
+                        />
+                      </div>
                       {transaction.symbol}
                     </TableCell>
                     <TableCell>
@@ -207,6 +190,28 @@ export default function HistoryList() {
                     </TableCell>
                     <TableCell className="text-foreground/60">
                       {transaction.fileName}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <EditTransactionDialog transaction={transaction}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-blue-500/20 hover:text-blue-400"
+                          >
+                            <Edit className="size-5" />
+                          </Button>
+                        </EditTransactionDialog>
+                        <DeleteTransactionDialog transaction={transaction}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-400"
+                          >
+                            <Trash2 className="size-5" />
+                          </Button>
+                        </DeleteTransactionDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

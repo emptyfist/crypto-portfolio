@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { transactions } from "@/lib/repositories/supabase";
 
@@ -21,6 +22,8 @@ export async function POST(request: NextRequest) {
       uploadDate,
     );
 
+    // Revalidate the holdings page to reflect updated portfolio data
+    revalidatePath("/dashboard");
     return NextResponse.json(result);
   } catch (error) {
     console.error("Upload error:", error);

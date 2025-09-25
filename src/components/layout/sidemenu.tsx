@@ -6,8 +6,8 @@ import Profile from "@/components/layout/profile";
 
 const MENU_ITEMS = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Leaderboard", href: "/leaderboard", icon: Briefcase },
   { name: "History", href: "/history", icon: History },
-  { name: "Holdings", href: "/holdings", icon: Briefcase },
 ] as const satisfies { name: string; href: string; icon: LucideIcon }[];
 
 export default function SideMenu() {

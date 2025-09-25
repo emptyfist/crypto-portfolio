@@ -31,9 +31,7 @@ import { revalidateHistory } from "@/lib/swr/use-history";
 import { useUpload } from "@/lib/swr/use-upload";
 
 const csvSchema = z.object({
-  Symbol: z.string().refine((val) => val.length === 3, {
-    message: "Symbol must be exactly 3 characters",
-  }),
+  Symbol: z.string().min(3, "Symbol is required"),
   Type: z.enum(["Buy", "Sell"], { message: "Type must be 'Buy' or 'Sell'" }),
   Amount: z
     .string()
@@ -83,6 +81,7 @@ export default function ImportBtn() {
       toast.success(data.message);
       // Revalidate history data to show updated transactions
       revalidateHistory();
+      // Note: Holdings page will be automatically revalidated via revalidatePath in the upload API
     },
     onError: (error) => {
       toast.error(error);
@@ -188,6 +187,7 @@ export default function ImportBtn() {
             setSelectedFile(null);
             // Revalidate history data to show updated transactions
             revalidateHistory();
+            // Note: Holdings page will be automatically revalidated via revalidatePath in the upload API
           }
         }
       },
