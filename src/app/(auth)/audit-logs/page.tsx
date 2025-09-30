@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auditLogs } from "@/lib/repositories/audit-logs";
 import { createServerSupabaseClient } from "@/lib/repositories/supabase";
 
+export const dynamic = "force-dynamic";
+
 interface AuditLogStats {
   totalLogs: number;
   recentActivity: number;

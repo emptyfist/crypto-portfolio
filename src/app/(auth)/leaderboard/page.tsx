@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { leaderboard } from "@/lib/repositories/supabase";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function LeaderboardPage() {
   let leaderboardData: LeaderboardUser[] = [];
   let error: string | null = null;
