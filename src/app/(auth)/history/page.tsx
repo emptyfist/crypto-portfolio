@@ -1,4 +1,5 @@
 import { History } from "lucide-react";
+import { Suspense } from "react";
 import ExportBtn from "@/components/history/export-btn";
 import Filter from "@/components/history/filter";
 import HistoryList from "@/components/history/history-list";
@@ -18,7 +19,9 @@ export default function HistoryPage() {
         </div>
       </div>
       <Filter />
-      <HistoryList />
+      <Suspense>
+        <HistoryList />
+      </Suspense>
     </div>
   );
 }

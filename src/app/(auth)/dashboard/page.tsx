@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { holdings } from "@/lib/repositories/supabase";
 import { formatCurrency, formatNumber, getTokenImageUrl } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   let holdingsData;
   let error: string | null = null;
